@@ -1,0 +1,135 @@
+﻿@model TestTrac.Models.ViewModels.RxUploadFileViewModel
+
+<div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3" id="formgrid" style="display:none;">
+    @using (Html.BeginForm("", "", FormMethod.Post, new { @class = "panel form-horizontal rx-form", @id = "rx-upload-form", @enctype = "multipart/form-data", @data_tt_target = Url.Action("UploadRx") }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.ValidationSummary(true)
+
+        <div id="rxuploadfiles">
+
+            <div id="uploadsuccess" style="display:none; text-align: center;">
+                <div style="font-size: 150px;"><i class="fa fa-check-circle green"></i></div>
+                <div style="font-weight:bold"><span>Your prescriptions have been upload successfully!</span></div>
+                <div><span>Thank you!</span></div>
+            </div>
+            <br />
+            <div id="alert-top" style="display: none;"></div>
+            
+            <div class="panel-heading">
+                <span class="panel-title"><i class="fa fa-picture-o"></i> Attach Prescriptions<span style="font-style: italic; font-size:small;color:#9d9d9d"> (Please select up to 3 prescription images and click 'Upload' to send to the MRO...)</span></span>
+            </div>
+            <div class="panel-body">
+                <div class="form-group" style="margin-bottom: 0">
+                    @Html.HiddenFor(m => m.Token, new { @readonly = "readonly" })
+                    @Html.HiddenFor(m => m.RxErrors, new { @readonly = "readonly" })
+                    @Html.ValidationMessageFor(m => m.RxErrors, null, new { @class = "help-block", @style = "margin-bottom: 10px" })
+                </div>
+                <div class="form-group row">
+                    <label for="inputUpload1Id2" class="col-xs-10 col-sm-3 col-md-3 col-lg-2 control-label">Prescription 1</label>
+                    <div class="col-xs-6 col-sm-4 col-md-5 col-lg-6">
+                        @Html.TextBoxFor(m => m.RxFilePath, new { placeholder = "No file chosen...", @readonly = "readonly", @class = "form-control" })
+                        <p class="help-block2">File Size: <span id="rx1size">0 Bytes</span></p>
+                    </div>
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                        <span class="btn btn-success fileinput-button btn-block btn-responsive">
+                            <span><span class="fa fa-folder-open"></span><span class="hidden-xs hidden-sm hidden-md"> Select file...</span></span>
+                            @Html.TextBoxFor(m => m.RxFileData, new { name = "RxFileData[]", type = "file", @accept = ".jpg, .jpeg, .png, .bmp", @class = "rxfdata" })
+                        </span>
+                    </div>
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                        <button id="RxRemove" type="button" class="btn btn-danger btn-block btn-responsive"><i class="fa fa-times"></i><span class="hidden-xs hidden-sm hidden-md"> Remove file</span></button>
+                    </div>
+                </div>
+                <hr class="crequests-hr-top">
+                <div class="form-group row">
+                    <label for="inputUpload2Id2" class="col-xs-10 col-sm-3 col-md-3 col-lg-2  control-label">Prescription 2</label>
+                    <div class="col-xs-6 col-sm-4 col-md-5 col-lg-6">
+                        @Html.TextBoxFor(m => m.RxFilePath2, new { placeholder = "No file chosen...", @readonly = "readonly", @class = "form-control" })
+                        <p class="help-block2">File Size: <span id="rx2size">0 Bytes</span></p>
+                    </div>
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                        <span class="btn btn-success fileinput-button btn-block btn-responsive">
+                            <span><span class="fa fa-folder-open"></span><span class="hidden-xs hidden-sm hidden-md"> Select file...</span></span>
+                            @Html.TextBoxFor(m => m.RxFileData2, new { name = "RxFileData2[]", type = "file", @accept = ".jpg, .jpeg, .png, .bmp", @class = "rxfdata" })
+                        </span>
+                    </div>
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                        <button id="RxRemove2" type="button" class="btn btn-danger btn-block btn-responsive"><i class="fa fa-times"></i><span class="hidden-xs hidden-sm hidden-md"> Remove file</span></button>
+                    </div>
+                </div>
+                <hr class="crequests-hr-top">
+                <div class="form-group row">
+                    <label for="inputUpload3Id2" class="col-xs-10 col-sm-3 col-md-3 col-lg-2  control-label">Prescription 3</label>
+                    <div class="col-xs-6 col-sm-4 col-md-5 col-lg-6">
+                        @Html.TextBoxFor(m => m.RxFilePath3, new { placeholder = "No file chosen...", @readonly = "readonly", @class = "form-control" })
+                        <p class="help-block2">File Size: <span id="rx3size">0 Bytes</span></p>
+                    </div>
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                        <span class="btn btn-success fileinput-button btn-block btn-responsive">
+                            <span><span class="fa fa-folder-open"></span><span class="hidden-xs hidden-sm hidden-md"> Select file...</span></span>
+                            @Html.TextBoxFor(m => m.RxFileData3, new { name = "RxFileData3[]", type = "file", @accept = ".jpg, .jpeg, .png, .bmp", @class = "rxfdata" })
+                        </span>
+                    </div>
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                        <button id="RxRemove3" type="button" class="btn btn-danger btn-block btn-responsive"><i class="fa fa-times"></i><span class="hidden-xs hidden-sm hidden-md"> Remove file</span></button>
+                    </div>
+                </div>
+                <hr class="crequests-hr-top">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                        <p class="help-block2">Total Size: <span id="rxtotalsize" class="green">0 Bytes</span><span id="rx2size"> of 10 MB (Max)</span></p>
+                    </div>
+                </div>
+                <br />
+                <hr class="crequests-hr-top">
+                <div class="row">
+                    <div style="text-decoration: underline; font-weight:800">Terms & Conditions</div>
+                </div>
+                <br />
+                <div class="row">
+                    <div style="width:auto;padding:10px 10px;font-size: smaller;" class="panel">
+                        <div id="agreement">
+                            <div style="margin-left:20px">
+                                <span>
+                                    The System is protected by the common law and Federal copyright and patent laws of the United States and the State of Florida. Use of the System is restricted to authorized screening participants only. Unauthorized access and use is prohibited. Any person or entity (collectively the participant) using the System is bound by this agreement.
+                                </span>
+                                <br />
+                                <br />
+                                <ol>
+                                    <li>The participant understands that using this system is by their own "free will" and alternative methods are available to transmit the information being collected.</li>
+                                    <li>The participant understands that the pertinent information being uploaded will be protected and held confidentially.</li>
+                                    <li>The participant understands that any information shared that is not pertinent for purposes of this system or that may be considered lewd or inappropriate may be discarded or shared with the the authorities, partipant's governing body or employer.</li>
+                                    <li>The participant also agrees that the Owners shall be entitled to an award of attorney fees and costs for the enforcement of this agreement and that jurisdiction and venue to enforce this agreement are in Broward County, Florida.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <div class="form-group row">
+                    <div class="col-12">
+                        <div class="checkbox">
+                            <label>
+                                @Html.CheckBoxFor(model => model.AgreesWithTermsAndConditions, new { @class = "px", @checked = "" })
+                                <span class="lbl">I the participant, agree with the Terms & Conditions</span>
+                            </label>
+                        </div>
+                        @Html.ValidationMessageFor(model => model.AgreesWithTermsAndConditions, null, new { @class = "help-block" })
+                    </div>
+                </div>
+                <hr class="crequests-hr-top">
+                <div class="form-group row" style="margin-bottom: 0;">
+                    <div id="alert"></div>
+                    <div class="col-sm-offset-3 col-sm-6">
+                        <button type="button" style="width:100%;" class="btn btn-primary" id="rx-upload-btn" data-loading-text="Uploading... <img src='/Images/ajax-loader-Default.gif'>">Upload</button>
+                    </div>
+                </div>
+                <br />
+            </div>
+            <div class="progress" id="progressContainer" style="display:none">
+                <div id="uploadProgress" class="progress-bar progress-bar-success" style="width: 0;"></div>
+            </div>
+        </div>
+    }
+</div>

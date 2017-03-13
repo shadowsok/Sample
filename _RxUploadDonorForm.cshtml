@@ -1,0 +1,154 @@
+﻿@model TestTrac.Models.ViewModels.RxUploadDonorViewModel
+
+<div class="col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3" id="formgrid">
+    @using (Html.BeginForm("", "", FormMethod.Post, new { @class = "panel form-horizontal rx-form", @id = "rx-donor-form", @enctype = "multipart/form-data", @data_tt_target = Url.Action("GetDonorStatus") }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.ValidationSummary(true)
+
+        <div id="rxuploaddonor">
+            <div class="panel-heading">
+                <span class="panel-title"><i class="fa fa-user"></i> Donor Details</span><span style="font-style: italic; font-size:small;color:#9d9d9d"> (Please enter the information below and click 'Submit' to determine the status of your test. If you experience difficulties you can fax your Rx to (954) 677-1175 or email mro@totalcompnet.com)</span>
+            </div>
+
+            <div class="panel-body">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">Please Select An Identifier</label>
+                    <div class="col-sm-10">
+                        <div class="radio">
+                            <label>
+                                @Html.RadioButtonFor(model => model.Identifier, "Specimen ID Number", new { @class = "px", @checked = "checked", id = "SpecimenRadio" })
+                                <span class="lbl">@Html.DisplayNameFor(model => model.SpecimenRadio)</span>
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                @Html.RadioButtonFor(model => model.Identifier, "Authorization Form Number", new { @class = "px", id = "AuthorizationRadio" })
+                                <span class="lbl">@Html.DisplayNameFor(model => model.AuthorizationRadio)</span>
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                @Html.RadioButtonFor(model => model.Identifier, "Donor Name", new { @class = "px", id = "NameRadio" })
+                                <span class="lbl">@Html.DisplayNameFor(model => model.NameRadio)</span>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="form-group" id="specgrp">
+                    @Html.LabelFor(model => model.SpecimenId, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.SpecimenId, new { @class = "form-control", tabindex = "1", Id = "SpecimenId", Name = "SpecimenId" })
+                        @Html.ValidationMessageFor(model => model.SpecimenId, null, new { @class = "help-block" })
+                        <p class="help-block2">Number located at the top of the Chain of Custody form</p>
+                    </div>
+                </div>
+                <div class="form-group nodisplay" id="authgrp">
+                    @Html.LabelFor(model => model.AuthorizationNumber, new { @class = "col-sm-2 control-label required" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.AuthorizationNumber, new { @class = "form-control", tabindex = "2", Id = "AuthorizationNumber", Name = "AuthorizationNumber" })
+                        @Html.ValidationMessageFor(model => model.AuthorizationNumber, null, new { @class = "help-block" })
+                        <p class="help-block2">Number listed in the upper-right hand corner of your TestTrac authorization form</p>
+                    </div>
+                </div>
+                <div class="form-group nodisplay" id="dfngrp">
+                    @Html.LabelFor(model => model.DonorFirstName, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.DonorFirstName, new { @class = "form-control", tabindex = "3", Id = "DonorFirstName", Name = "DonorFirstName" })
+                        @Html.ValidationMessageFor(model => model.DonorFirstName, null, new { @class = "help-block" })
+                        <p class="help-block2">First name of donor as it appers on the Chain of Custody form</p>
+                    </div>
+                </div>
+                <div class="form-group nodisplay" id="dlngrp">
+                    @Html.LabelFor(model => model.DonorLastName, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.DonorLastName, new { @class = "form-control", tabindex = "4", Id = "DonorLastName", Name = "DonorLastName" })
+                        @Html.ValidationMessageFor(model => model.DonorLastName, null, new { @class = "help-block" })
+                        <p class="help-block2">Last name of donor as it appers on the Chain of Custody form</p>
+                    </div>
+                </div>
+                @*Input tags with the suffix "_m" only display on mobile browsers*@
+                <hr class="crequests-hr-top">
+                <div class="form-group">
+                    @Html.LabelFor(model => model.CollectionDate, new { @class = "control-label col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.CollectionDate, new { @class = "form-control", tabindex = "5", placeholder = "Date of Collection" })
+                        <input id="CollectionDate_m" class="form-control" type="date" value="" tabindex="5" placeholder="Date of Collection" name="CollectionDate_m" style="display:none">
+                        @Html.ValidationMessageFor(model => model.CollectionDate, null, new { @class = "help-block" })
+                        <p class="help-block2">Date that donor went in for drug test collection (optional). Format: MM/DD/YYYY </p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(model => model.DonorID, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.DonorID, new { @class = "form-control", tabindex = "6", placeholder = "Last 4 of SSN or Donor Id" })
+                        @Html.ValidationMessageFor(model => model.DonorID, null, new { @class = "help-block" })
+                        <p class="help-block2">If SSN was not used please use the id specified on the Chain of Custody</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(model => model.DateOfBirth, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.DateOfBirth, new { @class = "form-control", tabindex = "7", placeholder = "Date of Birth" })
+                        <input class="form-control" id="DateOfBirth_m" name="DateOfBirth_m" placeholder="Date of Birth" tabindex="7" type="date" value="" style="display:none">
+                        @Html.ValidationMessageFor(model => model.DateOfBirth, null, new { @class = "help-block" })
+                        <p class="help-block2">Format: MM/DD/YYYY</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(model => model.CellPhone, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.CellPhone, new { @class = "form-control", tabindex = "8", placeholder = "Cell Phone #" })
+                        <input class="form-control" id="CellPhone_m" name="CellPhone_m" placeholder="Cell Phone #" tabindex="8" type="tel" value="" style="display:none" maxlength="10">
+                        @Html.ValidationMessageFor(model => model.CellPhone, null, new { @class = "help-block" })
+                        <p class="help-block2">Format: 10-digits; numbers only</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(model => model.HomePhone, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.HomePhone, new { @class = "form-control", tabindex = "9", placeholder = "Home Phone #" })
+                        <input class="form-control" id="HomePhone_m" name="HomePhone_m" placeholder="Home Phone #" tabindex="9" type="tel" value="" style="display:none" maxlength="10">
+                        @Html.ValidationMessageFor(model => model.HomePhone, null, new { @class = "help-block" })
+                        <p class="help-block2">Format: 10-digits; numbers only</p>
+                    </div>
+                </div>
+                <div class="form-group " id="email-group">
+                    @Html.LabelFor(model => model.DonorEmail, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.DonorEmail, new { @class = "form-control", tabindex = "10", placeholder = "Email Address", type="email" })
+                        @Html.ValidationMessageFor(model => model.DonorEmail, null, new { @class = "help-block" })
+                    </div>
+                </div>
+                <div class="form-group " id="emailc-group">
+                    @Html.LabelFor(model => model.ConfirmationDonorEmail, new { @class = "control-label required col-sm-2" })
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(model => model.ConfirmationDonorEmail, new { @class = "form-control", tabindex = "11", placeholder = "Confirmation Email Address", type="email" })
+                        @Html.ValidationMessageFor(model => model.ConfirmationDonorEmail, null, new { @class = "help-block" })
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <input type="hidden" value="false" name="notify">
+                                @Html.CheckBoxFor(model => model.EmailNotification, new { @class = "px", id = "notify", @checked = "" })
+                                <span class="lbl">Receive Drug Testing Updates</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <hr class="crequests-hr-top">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <div id="alert"></div>
+                    <div class="col-sm-offset-3 col-sm-6">
+                        <button type="submit" style="width:100%;" class="btn btn-primary" id="rx-donor-btn" data-loading-text="Please Wait...  <img src='/Images/ajax-loader-Default.gif'>">Submit</button>
+                    </div>
+                </div>
+                <span class="required"></span><span style="font-weight:100;">&nbsp;Required fields</span>
+                <br />
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,348 @@
+﻿@model TestTrac.Models.ViewModels.CreateECCFOrderWizardViewModel
+
+@{
+    ViewBag.Title = "Create E-COC Order";
+}
+
+<div class="page-header">
+    <div class="row">
+        <h1 class="col-xs-12 text-center text-left-sm">
+            <i class="fa fa-edit page-header-icon"></i>
+            Create New Electronic Chain Of Custody Order
+        </h1>
+    </div>
+</div>
+
+<script>
+
+    init.push(function () {
+
+        setFocusOnFirstFormInput();
+
+        // TODO: JQuery login check. Need to check if user is still logged in before going to the prev or next step.
+        //       If they are not logged in, redirect to the login page. Unfortunately they will lose any data entry progress. Saving progress can be looked into later...
+        // TODO: turn on when in production
+        //$("form :input").attr("autocomplete", "off");
+
+        $('.ui-wizard-create-order').pixelWizard({
+            onChange: function () {
+                console.log('Current step: ' + this.currentStep());
+            },
+            onFinish: function () {
+                // Disable changing step. To enable changing step just call this.unfreeze()
+                this.freeze();
+                console.log('Wizard is frozen');
+                console.log('Finished!');
+            }
+        });
+
+        $('.wizard-next-step-btn').click(function () {
+            $(this).parents('.ui-wizard-create-order').pixelWizard('nextStep');
+        });
+
+        $('.wizard-prev-step-btn').click(function () {
+            $(this).parents('.ui-wizard-create-order').pixelWizard('prevStep');
+            // Reinitialize map if user goes backwards
+            initMapModal();
+        });
+
+        $('.wizard-go-to-step-btn').click(function () {
+            $(this).parents('.ui-wizard-create-order').pixelWizard('setCurrentStep', 2);
+        });
+
+        function ProcessECCFOrderStep(stepCount) {
+            var $form = $("#FormStep" + stepCount);
+            var $testCodeDescription = "";
+
+            // Pass the Test Code Description from step 2 before user proceeds to next step on step 3
+            // NOTE: This is needed to prompt user of body specimen/collection site conflicts
+            if (stepCount == '3')
+                $testCodeDescription = "TestCodeDescription=" + $("#TestCode option:selected").text().toUpperCase() + "&"
+
+            $.ajax({
+                type: "POST",
+                url: $form.attr('data-tt-target'),
+                data: $testCodeDescription + $form.serialize(),
+                dataType: 'json',
+                async: false,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    if (jqXHR.status == 403) {
+                        SessionTimeoutRedirector();
+                    }
+                    else {
+                        ttGrowl('An Error Has Occurred', 'Error processing create order step: ' + jqXHR.status + ' ' + jqXHR.statusText, 'error')
+                    }
+                    $('button#Step' + stepCount).button('reset');
+                },
+                success: function (data) {
+                    $form.remove();
+                    $('#fmcontainer' + stepCount).append(data.html);
+                    reinitializeJQOValidation();
+                    setInputMasks();
+                    setFocusOnFirstFormInput();
+                    setDateTimePickers();
+                    setGeneralControlEvents();
+                    InitSelect2Controls();
+                    disableEnableWizStep2Radios();
+                    updateAllStep2BadgeCounts();
+                    handleClicksOnCollOpts();
+                    initToolTips();
+                    if (data.isValid) {
+                        // If step is last step before the user confirmation step display confirmation data before proceeding to that step
+                        if (stepCount == 3) {
+                            DisplayStep4UserConfirmation();
+                        }
+
+                        $('.ui-wizard-create-order').pixelWizard('nextStep');
+                        $('button#Step' + stepCount).button('reset');
+                    }
+                    else {
+                        $('button#Step' + stepCount).button('reset');
+                    }
+                    setFocusOnFirstFormInput();
+                }
+            });
+        }
+
+        function DisplayStep4UserConfirmation() {
+            var $form = $('#FormStep4');
+            var $allForms = $('.WizardStep');
+
+            $.ajax({
+                type: "POST",
+                url: $form.attr('data-tt-target'),
+                data: $allForms.serialize(),
+                async: false,
+                dataType: 'json',
+                error: function (jqXHR, textStatus, errorThrown) {
+                    if (jqXHR.status == 403) {
+                        SessionTimeoutRedirector();
+                    }
+                    else {
+                        ttGrowl('An Error Has Occurred', 'Error processing create order step: ' + jqXHR.status + ' ' + jqXHR.statusText, 'error')
+                    }
+                    $('button#Step4').prop('disabled', true);
+                },
+                success: function (data) {
+                    $form.remove();
+                    $('#fmcontainer4').append(data.html);
+                    reinitializeJQOValidation();
+                    //setFocusOnFirstFormInput();
+                }
+            });
+        }
+
+        function ProceedToOrderConfirmationPage() {
+            var $allForms = $('.WizardStep');
+            var Path;
+            if ($("#AppRoot").attr("data-tt-root") == '/')
+                Path = '/ECCFOrder/Confirmation';
+            else
+                Path = $("#AppRoot").attr("data-tt-root") + '/ECCFOrder/Confirmation';
+            $.ajax({
+                type: "POST",
+                url: Path,
+                data: $allForms.serialize(),
+                async: false,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    if (jqXHR.status == 403) {
+                        SessionTimeoutRedirector();
+                    }
+                    else if (jqXHR.status == 400)
+                    {
+                        $("button#Step4").button('reset')
+                        ttGrowl('Unable To Submit Order', jqXHR.responseText, 'error')
+                    }
+                    else {
+                        ttGrowl('An Error Has Occurred', 'Error submitting order ' + jqXHR.status + ' ' + jqXHR.statusText, 'error')
+                    }
+                },
+                success: function (data) {
+                    $('#BodyRender').empty();
+                    $('#BodyRender').append(data);
+                    PixelAdmin.plugins.alerts.add(('<i class="fa fa-edit"></i>&nbsp;<strong>Order Created Successfully!</strong> Your order confirmation number is:&nbsp;' + $('#OrderConfirmationNumber').val()), {
+                        type: 'success',
+                        namespace: 'pa_page_alerts_dark',
+                        classes: 'alert-dark'
+                    })
+                    ttGrowl('Order Created Successfully!', 'Your order confirmation number is: ' + $('#OrderConfirmationNumber').val(), 'notice');
+                }
+            });
+        }
+
+        InitSelect2Controls();
+
+        $("button#Step1").on("click", function () {
+            var btn = $(this);
+            btn.button('loading');
+            ProcessECCFOrderStep(1);
+        });
+
+        $("button#Step2").on("click", function () {
+            var btn = $(this);
+            btn.button('loading');
+            //$(this).html('Next <img src="@Url.Content("~/Images/ajax-wiz-loader-step.gif")" />');
+            ProcessECCFOrderStep(2);
+        });
+
+        $("button#Step3").on("click", function () {
+            var btn = $(this);
+            btn.button('loading');
+            // $(this).html('Next <img src="@Url.Content("~/Images/ajax-wiz-loader-step.gif")" />');
+            ProcessECCFOrderStep(3);
+        });
+
+        $("button#Step4").on("click", function () {
+            var btn = $(this);
+            btn.button('loading');
+            //$(this).html('Next <img src="@Url.Content("~/Images/ajax-wiz-loader-step.gif")" />');
+            ProceedToOrderConfirmationPage();
+        });
+
+        //$(document).keypress(function (e) {
+        //    if (e.which == 13) {
+        //        if ($('#FormStep1').is(':visible')) {
+        //            $('#Step1').click();
+        //        }
+        //        else if ($('#FormStep2').is(':visible')) {
+        //            $('#Step2').click();
+        //        }
+        //        else if ($('#FormStep3').is(':visible')) {
+        //            $('#Step3').click();
+        //        }
+        //    }
+        //});
+
+        init.push(function () {
+
+            function DisplayPDF() {
+
+                var content = "<object id='pdfObject' type='application/pdf' data='websrvr01:8076/handlers/confirmation.asp?c=" + $('OrderConfirmationNumber') + "' width='100%' height='100%' />";
+                $("#pdfDisplay").attr("title", $('OrderConfirmationNumber') + " Preview");
+                $("#pdfDisplay").load(content);
+                $("#pdfDisplay").dialog({ width: 800, height: 400, resizable: true, buttons: { 'Ok': function () { $(this).dialog('close'); } } });
+                return false;
+            }
+        });
+
+        function InitSelect2Controls() {
+            $("#Lab").select2({
+                allowClear: true
+            });
+
+            $("#MainAccount").select2({
+                allowClear: true
+            });
+
+            $("#SubAccount").select2({
+                allowClear: true
+            });
+
+            $("#LabAccNum").select2({
+                allowClear: true
+            });
+
+            $("#ReasonForTest").select2({
+                allowClear: true
+            })
+
+            $("#TestCode").select2({
+                allowClear: true
+            })
+
+            $("#OrderExpirationTimeZone").select2({
+                allowClear: true
+            })
+        }
+    });
+</script>
+
+@Html.ValidationSummary(false)
+<div class="panel">
+    <div class="panel-heading">
+        <span class="panel-title">Create New Order <span style="font-style: italic; font-size:small;color:#9d9d9d">(Please follow the steps below...)</span></span>
+    </div>
+    <div class="panel-body">
+        <div class="wizard ui-wizard-create-order">
+            <div class="wizard-wrapper">
+                <ul class="wizard-steps" style="left: 0;">
+                    <li data-target="#wizard-createorder-step1" style="width: 396px; max-width: 396px; min-width: 396px;" class="active">
+                        <span class="wizard-step-number" id="wiznumber">1</span>
+                        <span class="wizard-step-caption">
+                            Step 1
+                            <span class="wizard-step-description">Donor</span>
+                        </span>
+                    </li>
+                    <li data-target="#wizard-createorder-step2" style="width: 396px; max-width: 396px; min-width: 396px;">
+                        <!-- ! Remove space between elements by dropping close angle -->
+                        <span class="wizard-step-number">2</span>
+                        <span class="wizard-step-caption">
+                            Step 2
+                            <span class="wizard-step-description">Account & Order</span>
+                        </span>
+                    </li>
+                    <li data-target="#wizard-createorder-step3" style="width: 396px; max-width: 396px; min-width: 396px;">
+                        <!-- ! Remove space between elements by dropping close angle -->
+                        <span class="wizard-step-number">3</span>
+                        <span class="wizard-step-caption">
+                            Step 3
+                            <span class="wizard-step-description">Collection</span>
+                        </span>
+                    </li>
+                    <li data-target="#wizard-createorder-step4" style="width: 396px; max-width: 396px; min-width: 396px;">
+                        <!-- ! Remove space between elements by dropping close angle -->
+                        <span class="wizard-step-number">4</span>
+                        <span class="wizard-step-caption">
+                            Step 4
+                            <span class="wizard-step-description">Confirm Order</span>
+                        </span>
+                    </li>
+                </ul> <!-- / .wizard-steps -->
+            </div> <!-- / .wizard-wrapper -->
+            <div class="wizard-content panel">
+                <div id="wizard-createorder-step1" class="wizard-pane" style="display: block;">
+                    <div class="col-lg-7 col-md-12">
+                        <div id="fmcontainer1">
+                            @Html.Partial("_CreateECCFOrderStep1", Model.Step1)
+                        </div>
+                        <button id="Step1" class="btn btn-primary pull-right" type="button" data-loading-text="Proceeding...">Next >></button>
+                    </div>
+                </div> <!-- / .wizard-pane -->
+                <div style="display: none;" id="wizard-createorder-step2" class="wizard-pane">
+                    <div class="col-lg-7 col-md-12">
+                        <div id="fmcontainer2">
+                            @Html.Partial("_CreateECCFOrderStep2", Model.Step2)
+                        </div>
+                        <button class="btn wizard-prev-step-btn pull-left"><< Prev</button>
+                        <button id="Step2" class="btn btn-primary pull-right" type="button" data-loading-text="Proceeding...">Next >></button>
+                    </div>
+                </div> <!-- / .wizard-pane -->
+                <div style="display: none;" id="wizard-createorder-step3" class="wizard-pane">
+                    <div class="col-lg-7 col-md-12">
+                        <div id="fmcontainer3">
+                            @Html.Partial("_CreateECCFOrderStep3", Model.Step3)
+                        </div>
+                        <button class="btn wizard-prev-step-btn pull-left"><< Prev</button>
+                        <button id="Step3" class="btn btn-primary pull-right" type="button" data-loading-text="Proceeding...">Next >></button>
+                    </div>
+                </div> <!-- / .wizard-pane -->
+                <div style="display: none;" id="wizard-createorder-step4" class="wizard-pane">
+                    <div id="fmcontainer4">
+                        @Html.Partial("_CreateECCFOrderStep4", Model)
+                    </div>
+                    <button class="btn wizard-prev-step-btn pull-left"><< Prev</button>
+                    <button id="Step4" class="btn btn-primary pull-right" type="button" data-loading-text="Submitting Order...">Proceed With Order</button>
+                </div> <!-- / .wizard-pane -->
+            </div> <!-- / .wizard-content -->
+        </div> <!-- / .wizard -->
+    </div>
+</div>
+
+<div>
+    @Html.ActionLink("Go to Order List", "Index")
+</div>
+
+@*TODO: Find way to redefine sections so you can include all the script reference directly in the _Map.cshtml partial view*@
+@section Scripts {
+    @Scripts.Render("~/bundles/mapquest")
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation loop="false">
+           <image_file>resource/croped cherecters/gohan.bmp</image_file>
+
+           <frame wait="0.25">
+                  <rect left="125" top="1169" right="172" bottom="1222"/>
+                  <anchor x="23" y="51"/>
+           </frame>
+
+</animation>
+
+
